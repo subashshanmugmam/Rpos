@@ -16,6 +16,20 @@ $conn = getConnection();
 $reportType = isset($_GET['report']) ? $_GET['report'] : 'sales';
 $reportData = [];
 
+// Function to read CSV files
+function readCSV($filePath) {
+    $data = [];
+    if (file_exists($filePath)) {
+        $file = fopen($filePath, 'r');
+        $headers = fgetcsv($file);
+        while (($row = fgetcsv($file)) !== false) {
+            $data[] = array_combine($headers, $row);
+        }
+        fclose($file);
+    }
+    return $data;
+}
+
 if ($reportType === 'sales') {
     $query = "SELECT t.sale_id, t.invoice_number, t.total_amount, t.sale_date, c.first_name, c.last_name, u.full_name as salesperson
               FROM sales_transactions t
@@ -29,6 +43,13 @@ if ($reportType === 'sales') {
         }
         mysqli_free_result($result);
     }
+} elseif ($reportType === 'predictions') {
+    // Get AI prediction data from CSVs
+    $dailySalesPath = '../Retail-POS-system/ai_module/data/daily_sales_2025-04-15.csv';
+    $categorySalesPath = '../Retail-POS-system/ai_module/data/category_sales_2025-04-15.csv';
+    
+    $dailySalesData = readCSV($dailySalesPath);
+    $categorySalesData = readCSV($categorySalesPath);
 }
 
 // Include header
@@ -39,6 +60,12 @@ include '../includes/header/header.php';
     <h2><i class="fas fa-chart-bar"></i> Reports</h2>
 </div>
 
+<div class="report-tabs">
+    <a href="?report=sales" class="tab <?php echo $reportType === 'sales' ? 'active' : ''; ?>">Sales Report</a>
+    <a href="?report=predictions" class="tab <?php echo $reportType === 'predictions' ? 'active' : ''; ?>">AI Predictions</a>
+</div>
+
+<?php if ($reportType === 'sales'): ?>
 <div class="card">
     <div class="card-header">
         <h3>Sales Report</h3>
@@ -75,6 +102,85 @@ include '../includes/header/header.php';
     </div>
 </div>
 
+<?php elseif ($reportType === 'predictions'): ?>
+<div class="card">
+    <div class="card-header">
+        <h3>Daily Sales Predictions</h3>
+    </div>
+    <div class="card-body">
+        <?php if (!empty($dailySalesData)): ?>
+            <div class="prediction-summary">
+                <p>The AI model has analyzed your sales data and made the following predictions:</p>
+            </div>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Predicted Sales</th>
+                        <th>Confidence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($dailySalesData as $row): ?>
+                        <tr>
+                            <td><?php echo $row['Date']; ?></td>
+                            <td>$<?php echo number_format(floatval($row['Predicted_Sales']), 2); ?></td>
+                            <td><?php echo isset($row['Confidence']) ? $row['Confidence'] . '%' : 'N/A'; ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php else: ?>
+            <div class="alert alert-info">
+                <p>No daily sales prediction data is available. Please run the AI module to generate predictions.</p>
+                <p><code>cd /opt/lampp/htdocs/Rpos/Retail-POS-system && source ai_module_env/bin/activate && cd ai_module && python main.py --now</code></p>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Category Sales Predictions</h3>
+    </div>
+    <div class="card-body">
+        <?php if (!empty($categorySalesData)): ?>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Predicted Sales</th>
+                        <th>Growth Trend</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($categorySalesData as $row): ?>
+                        <tr>
+                            <td><?php echo $row['Category']; ?></td>
+                            <td>$<?php echo number_format(floatval($row['Predicted_Sales']), 2); ?></td>
+                            <td>
+                                <?php 
+                                if (isset($row['Growth_Rate'])) {
+                                    $growth = floatval($row['Growth_Rate']);
+                                    $icon = $growth > 0 ? '↑' : ($growth < 0 ? '↓' : '→');
+                                    $color = $growth > 0 ? 'green' : ($growth < 0 ? 'red' : 'orange');
+                                    echo "<span style='color: $color'>$icon " . abs($growth) . "%</span>";
+                                } else {
+                                    echo 'N/A';
+                                }
+                                ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php else: ?>
+            <div class="alert alert-info">No category sales prediction data is available.</div>
+        <?php endif; ?>
+    </div>
+</div>
+<?php endif; ?>
+
 <style>
     .page-header {
         margin-bottom: 20px;
@@ -106,6 +212,39 @@ include '../includes/header/header.php';
     }
     .table-striped tbody tr:nth-of-type(odd) {
         background-color: rgba(0, 0, 0, 0.05);
+    }
+    .report-tabs {
+        display: flex;
+        margin-bottom: 20px;
+    }
+    .tab {
+        padding: 10px 20px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px 5px 0 0;
+        margin-right: 5px;
+        text-decoration: none;
+        color: #495057;
+    }
+    .tab.active {
+        background-color: #fff;
+        border-bottom-color: #fff;
+        font-weight: bold;
+    }
+    .prediction-summary {
+        margin-bottom: 20px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+    .alert {
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    .alert-info {
+        background-color: #d1ecf1;
+        color: #0c5460;
     }
 </style>
 
