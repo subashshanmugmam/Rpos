@@ -72,3 +72,4 @@ dbms_project/
 
 This retail POS system is ideal for businesses looking to digitize their retail operations with a scalable, feature-rich solution that can grow with their needs. The system emphasizes data security, user experience, and operational efficiency to help businesses streamline their sales and inventory management processes.
 # Rpos
+# Retail-Project
