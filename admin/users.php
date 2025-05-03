@@ -82,10 +82,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Check if password is being updated
         if (!empty($_POST['password'])) {
-            $password = $_POST['password']; // In a production environment, this should be hashed
+            $hashedPassword = password_hash($_POST['password'], PASSWORD_DEFAULT);
             $updateQuery = "UPDATE users SET username = ?, password = ?, full_name = ?, email = ?, role = ?, status = ? WHERE user_id = ?";
             $stmt = $conn->prepare($updateQuery);
-            $stmt->bind_param("ssssssi", $username, $password, $fullName, $email, $role, $status, $userId);
+            $stmt->bind_param("ssssssi", $username, $hashedPassword, $fullName, $email, $role, $status, $userId);
         } else {
             $updateQuery = "UPDATE users SET username = ?, full_name = ?, email = ?, role = ?, status = ? WHERE user_id = ?";
             $stmt = $conn->prepare($updateQuery);

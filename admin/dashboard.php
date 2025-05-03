@@ -64,6 +64,7 @@ include '../includes/header/header.php';
     </div>
     <div class="quick-actions">
         <a href="../admin/reports.php" class="action-button"><i class="fas fa-chart-bar"></i> View Reports</a>
+        <a href="../admin/reports.php?report=predictions" class="action-button"><i class="fas fa-robot"></i> View Predictions</a>
         <a href="../admin/products.php?action=add" class="action-button"><i class="fas fa-box-open"></i> Add Product</a>
         <a href="../admin/users.php?action=add" class="action-button"><i class="fas fa-user-plus"></i> Add User</a>
     </div>

@@ -675,72 +675,212 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
-    @media print {
-        .non-printable {
-            display: none !important;
-        }
-        
-        body {
-            padding: 0;
-            margin: 0;
-        }
-        
-        .container-fluid {
-            width: 100%;
-            margin: 0;
-            padding: 0;
-        }
-        
-        .page-header {
-            margin-bottom: 20px;
-        }
-        
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .table th, .table td {
-            padding: 5px;
-            border: 1px solid #ddd;
-        }
-        
-        canvas {
-            max-width: 100% !important;
-            height: auto !important;
-        }
+/* --- Modern 3D Glassmorphism Styles for Sales Report --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+body {
+    font-family: 'Inter', 'Poppins', Arial, sans-serif;
+    background: linear-gradient(135deg, #e0e7ff 0%, #f8fafc 100%);
+    min-height: 100vh;
+}
+
+.container-fluid {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 2rem 1.5rem;
+    background: rgba(255,255,255,0.25);
+    box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18);
+    border-radius: 2rem;
+    backdrop-filter: blur(12px);
+}
+
+.page-header {
+    background: rgba(255,255,255,0.35);
+    box-shadow: 0 4px 16px #6366f122;
+    border-radius: 1.5rem;
+    padding: 1.2rem 2rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+    color: #3b82f6;
+    letter-spacing: 1px;
+}
+
+.page-actions .btn {
+    border-radius: 1rem;
+    font-weight: 600;
+    box-shadow: 0 2px 12px #6366f155;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.page-actions .btn-primary {
+    background: linear-gradient(90deg, #6366f1 0%, #3b82f6 100%);
+    border: none;
+}
+.page-actions .btn-primary:hover {
+    background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%);
+}
+.page-actions .btn-secondary {
+    background: #fff;
+    color: #6366f1;
+    border: 1.5px solid #6366f1;
+}
+.page-actions .btn-secondary:hover {
+    background: #6366f1;
+    color: #fff;
+}
+
+.card {
+    background: rgba(255,255,255,0.35) !important;
+    box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18), 0 2px 8px #6366f133;
+    border-radius: 2rem !important;
+    border: none;
+    overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+.card:hover {
+    box-shadow: 0 16px 48px 0 #6366f144, 0 2px 8px #6366f133;
+    transform: translateY(-4px) scale(1.01);
+}
+.card-header {
+    background: rgba(255,255,255,0.18) !important;
+    border-bottom: none;
+    font-weight: 700;
+    color: #6366f1;
+    font-size: 1.15rem;
+    border-radius: 1.5rem 1.5rem 0 0;
+}
+
+/* Summary Cards */
+.row.mb-4 > .col-md-3 > .card {
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%);
+    color: #fff !important;
+    box-shadow: 0 8px 32px 0 #6366f188;
+    border-radius: 1.5rem !important;
+    margin-bottom: 0;
+}
+.row.mb-4 > .col-md-3 > .card.bg-warning {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e42 100%);
+    color: #fff !important;
+}
+.row.mb-4 > .col-md-3 > .card.bg-success {
+    background: linear-gradient(135deg, #22d3ee 0%, #10b981 100%);
+    color: #fff !important;
+}
+.row.mb-4 > .col-md-3 > .card.bg-info {
+    background: linear-gradient(135deg, #60a5fa 0%, #818cf8 100%);
+    color: #fff !important;
+}
+
+.card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+.card-text {
+    font-size: 1.6rem;
+    font-weight: 700;
+    text-shadow: 0 2px 8px #60a5fa33;
+}
+
+/* Table Styles */
+.table {
+    background: rgba(255,255,255,0.18);
+    border-radius: 1.2rem;
+    overflow: hidden;
+    box-shadow: 0 2px 12px #6366f122;
+}
+.table th {
+    background: linear-gradient(90deg, #6366f1 0%, #3b82f6 100%) !important;
+    color: #fff !important;
+    font-weight: 600;
+    border: none;
+}
+.table-striped > tbody > tr:nth-of-type(odd) {
+    background: rgba(99,102,241,0.05);
+}
+.table td, .table th {
+    border: none !important;
+    padding: 0.9rem 1.2rem !important;
+}
+
+/* Chart Container */
+.card-body canvas {
+    background: rgba(255,255,255,0.18);
+    border-radius: 1.2rem;
+    box-shadow: 0 2px 12px #6366f122;
+    padding: 0.5rem;
+}
+
+/* Alert Info */
+.alert-info {
+    background: rgba(219,234,254,0.7) !important;
+    border: none !important;
+    color: #2563eb !important;
+    border-radius: 1.2rem;
+    box-shadow: 0 2px 12px #60a5fa22;
+}
+
+/* Filter Card */
+.card.mb-4.non-printable {
+    background: rgba(255,255,255,0.45) !important;
+    box-shadow: 0 4px 16px #6366f122;
+    border-radius: 1.5rem !important;
+}
+
+/* Buttons */
+.btn-primary, .btn-info, .btn-warning, .btn-success {
+    border-radius: 1.2rem !important;
+    font-weight: 600;
+    box-shadow: 0 2px 12px #6366f155;
+    border: none;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-primary {
+    background: linear-gradient(90deg, #6366f1 0%, #3b82f6 100%) !important;
+}
+.btn-primary:hover {
+    background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%) !important;
+}
+.btn-secondary {
+    background: #fff !important;
+    color: #6366f1 !important;
+    border: 1.5px solid #6366f1 !important;
+}
+.btn-secondary:hover {
+    background: #6366f1 !important;
+    color: #fff !important;
+}
+
+/* Responsive Tweaks */
+@media (max-width: 900px) {
+    .container-fluid {
+        padding: 1rem 0.2rem;
     }
-    
-    .card {
-        margin-bottom: 20px;
-    }
-    
-    .card-header {
-        background-color: #f8f9fa;
-        font-weight: bold;
-    }
-    
-    .table th {
-        background-color: #f8f9fa;
-    }
-    
     .page-header {
-        margin-bottom: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem 1rem;
     }
-    
-    .page-actions {
-        display: flex;
-        gap: 10px;
+    .row.mb-4 > .col-md-3 {
+        margin-bottom: 1rem;
     }
-    
-    .alert-info {
-        background-color: #d9edf7;
-        border-color: #bce8f1;
-        color: #31708f;
-    }
+}
+
+/* Print Styles (keep as is, but override for new look) */
+@media print {
+    .non-printable { display: none !important; }
+    body { padding: 0; margin: 0; }
+    .container-fluid { width: 100%; margin: 0; padding: 0; }
+    .page-header { margin-bottom: 20px; }
+    .table { width: 100%; border-collapse: collapse; }
+    .table th, .table td { padding: 5px; border: 1px solid #ddd; }
+    canvas { max-width: 100% !important; height: auto !important; }
+}
 </style>
 
 <?php

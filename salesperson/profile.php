@@ -18,9 +18,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = !empty($_POST['password']) ? $_POST['password'] : null;
 
     if ($password) {
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
         $query = "UPDATE users SET full_name = ?, email = ?, password = ? WHERE user_id = ?";
         $stmt = $conn->prepare($query);
-        $stmt->bind_param("sssi", $fullName, $email, $password, $_SESSION['user_id']);
+        $stmt->bind_param("sssi", $fullName, $email, $hashedPassword, $_SESSION['user_id']);
     } else {
         $query = "UPDATE users SET full_name = ?, email = ? WHERE user_id = ?";
         $stmt = $conn->prepare($query);

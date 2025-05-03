@@ -208,6 +208,15 @@ INSERT INTO payments (name, description) VALUES
 ('Credit Card', 'Visa/Mastercard payments'),
 ('Mobile Wallet', 'Digital wallet payments');
 
+-- AI Predictions Table
+CREATE TABLE IF NOT EXISTS ai_predictions (
+    prediction_id INT AUTO_INCREMENT PRIMARY KEY,
+    prediction_date DATE NOT NULL,
+    prediction_value VARCHAR(255) NOT NULL,
+    prediction_accuracy DECIMAL(5, 2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Audit Log Table (for tracking important system actions)
 CREATE TABLE IF NOT EXISTS audit_log (
     log_id INT AUTO_INCREMENT PRIMARY KEY,

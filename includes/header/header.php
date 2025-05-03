@@ -1,7 +1,7 @@
 <?php
 // Verify session exists
 if (!isset($_SESSION['user_id'])) {
-    header('Location: /dbms_project/public/index.php');
+    header('Location: /Rpos/public/index.php');
     exit;
 }
 
@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 $current_page = basename($_SERVER['PHP_SELF']);
 
 // Get database connection
-require_once $_SERVER['DOCUMENT_ROOT'] . '/dbms_project/config/database.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/Rpos/config/database.php';
 $conn = getConnection();
 
 // Get system settings
@@ -22,6 +22,9 @@ if ($settings_result) {
     }
     mysqli_free_result($settings_result);
 }
+
+// Close the database connection
+mysqli_close($conn);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -29,7 +32,7 @@ if ($settings_result) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo isset($settings['company_name']) ? $settings['company_name'] : 'Retail POS System'; ?></title>
-    <link rel="stylesheet" href="/dbms_project/assets/css/style.css">
+    <link rel="stylesheet" href="/Rpos/assets/css/style.css">
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
@@ -53,62 +56,62 @@ if ($settings_result) {
                 <?php if ($_SESSION['role'] === 'admin'): ?>
                     <!-- Admin Menu -->
                     <li class="<?php echo $current_page === 'dashboard.php' ? 'active' : ''; ?>">
-                        <a href="/dbms_project/admin/dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                        <a href="/Rpos/admin/dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                     </li>
                     <li class="<?php echo $current_page === 'users.php' ? 'active' : ''; ?>">
-                        <a href="/dbms_project/admin/users.php"><i class="fas fa-users"></i> Users</a>
+                        <a href="/Rpos/admin/users.php"><i class="fas fa-users"></i> Users</a>
                     </li>
                     <li class="<?php echo $current_page === 'products.php' ? 'active' : ''; ?>">
-                        <a href="/dbms_project/admin/products.php"><i class="fas fa-box"></i> Products</a>
+                        <a href="/Rpos/admin/products.php"><i class="fas fa-box"></i> Products</a>
                     </li>
                     <li class="<?php echo $current_page === 'categories.php' ? 'active' : ''; ?>">
-                        <a href="/dbms_project/admin/categories.php"><i class="fas fa-tags"></i> Categories</a>
+                        <a href="/Rpos/admin/categories.php"><i class="fas fa-tags"></i> Categories</a>
                     </li>
                     <li class="<?php echo $current_page === 'reports.php' ? 'active' : ''; ?>">
-                        <a href="/dbms_project/admin/reports.php"><i class="fas fa-chart-bar"></i> Reports</a>
+                        <a href="/Rpos/admin/reports.php"><i class="fas fa-chart-bar"></i> Reports</a>
                     </li>
                     <li class="<?php echo $current_page === 'settings.php' ? 'active' : ''; ?>">
-                        <a href="/dbms_project/admin/settings.php"><i class="fas fa-cog"></i> Settings</a>
+                        <a href="/Rpos/admin/settings.php"><i class="fas fa-cog"></i> Settings</a>
                     </li>
                 <?php elseif ($_SESSION['role'] === 'salesperson'): ?>
                     <!-- Enhanced Salesperson Menu -->
                     <li class="<?php echo $current_page === 'dashboard.php' ? 'active' : ''; ?>">
-                        <a href="/dbms_project/salesperson/dashboard.php"><i class="fas fa-tachometer-alt"></i> Sales Dashboard</a>
+                        <a href="/Rpos/salesperson/dashboard.php"><i class="fas fa-tachometer-alt"></i> Sales Dashboard</a>
                     </li>
                     <li class="<?php echo $current_page === 'pos.php' ? 'active' : ''; ?>">
-                        <a href="/dbms_project/salesperson/pos.php"><i class="fas fa-cash-register"></i> POS System</a>
+                        <a href="/Rpos/salesperson/pos.php"><i class="fas fa-cash-register"></i> POS System</a>
                     </li>
                     <li class="<?php echo $current_page === 'customers.php' ? 'active' : ''; ?>">
-                        <a href="/dbms_project/salesperson/customers.php"><i class="fas fa-users-cog"></i> Customer Management</a>
+                        <a href="/Rpos/salesperson/customers.php"><i class="fas fa-users-cog"></i> Customer Management</a>
                     </li>
                     <li class="<?php echo $current_page === 'live_inventory.php' ? 'active' : ''; ?>">
-                        <a href="/dbms_project/salesperson/live_inventory.php"><i class="fas fa-boxes"></i> Live Inventory</a>
+                        <a href="/Rpos/salesperson/live_inventory.php"><i class="fas fa-boxes"></i> Live Inventory</a>
                     </li>
                     <li class="<?php echo $current_page === 'sales_report.php' ? 'active' : ''; ?>">
-                        <a href="/dbms_project/salesperson/sales_report.php"><i class="fas fa-chart-line"></i> Sales Reports</a>
+                        <a href="/Rpos/salesperson/sales_report.php"><i class="fas fa-chart-line"></i> Sales Reports</a>
                     </li>
                 <?php elseif ($_SESSION['role'] === 'stock_manager'): ?>
                     <!-- Stock Manager Menu -->
                     <li class="<?php echo $current_page === 'dashboard.php' ? 'active' : ''; ?>">
-                        <a href="/dbms_project/stock_manager/dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                        <a href="/Rpos/stock_manager/dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                     </li>
                     <li class="<?php echo $current_page === 'add_product.php' ? 'active' : ''; ?>">
-                        <a href="/dbms_project/stock_manager/add_product.php"><i class="fas fa-plus-circle"></i> Add Product</a>
+                        <a href="/Rpos/stock_manager/add_product.php"><i class="fas fa-plus-circle"></i> Add Product</a>
                     </li>
                     <li class="<?php echo $current_page === 'inventory.php' ? 'active' : ''; ?>">
-                        <a href="/dbms_project/stock_manager/inventory.php"><i class="fas fa-warehouse"></i> Inventory</a>
+                        <a href="/Rpos/stock_manager/inventory.php"><i class="fas fa-warehouse"></i> Inventory</a>
                     </li>                    
                     <li class="<?php echo $current_page === 'stock_reports.php' ? 'active' : ''; ?>">
-                        <a href="/dbms_project/stock_manager/stock_reports.php"><i class="fas fa-chart-line"></i> Stock Reports</a>
+                        <a href="/Rpos/stock_manager/stock_reports.php"><i class="fas fa-chart-line"></i> Stock Reports</a>
                     </li>
                 <?php endif; ?>
                 
                 <!-- Common Menu Items -->
                 <li class="<?php echo $current_page === 'profile.php' ? 'active' : ''; ?>">
-                    <a href="/dbms_project/<?php echo $_SESSION['role']; ?>/profile.php"><i class="fas fa-user"></i> My Profile</a>
+                    <a href="/Rpos/<?php echo $_SESSION['role']; ?>/profile.php"><i class="fas fa-user"></i> My Profile</a>
                 </li>
                 <li>
-                    <a href="/dbms_project/public/logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    <a href="/Rpos/public/logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
                 </li>
             </ul>
         </nav>
@@ -129,8 +132,8 @@ if ($settings_result) {
                             <i class="fas fa-user"></i> <?php echo $_SESSION['full_name']; ?> <i class="fas fa-chevron-down"></i>
                         </button>
                         <div class="dropdown-menu">
-                            <a href="/dbms_project/<?php echo $_SESSION['role']; ?>/profile.php"><i class="fas fa-user-circle"></i> My Profile</a>
-                            <a href="/dbms_project/public/logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                            <a href="/Rpos/<?php echo $_SESSION['role']; ?>/profile.php"><i class="fas fa-user-circle"></i> My Profile</a>
+                            <a href="/Rpos/public/logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
                         </div>
                     </div>
                 </div>

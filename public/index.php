@@ -13,6 +13,8 @@ if (isset($_SESSION['user_id'])) {
     }
     exit;
 }
+    
+$is_ajax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 
 // Process login request
 $error_message = "";
@@ -24,15 +26,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = sanitizeInput($_POST['username'], $conn);
     $password = $_POST['password']; // We'll verify the password directly against database
     
-    // Query to check user credentials
-    $query = "SELECT user_id, username, full_name, role, status FROM users WHERE username = ? AND password = ? AND status = 'active'";
+    // Query to get user data
+    $query = "SELECT user_id, username, full_name, role, status, password FROM users WHERE username = ? AND status = 'active'";
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("ss", $username, $password);
+    $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
     
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
+        
+        // Verify password
+        if (password_verify($password, $user['password'])) {
         
         // Set session variables
         $_SESSION['user_id'] = $user['user_id'];
@@ -48,16 +53,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $update_stmt->close();
         
         // Redirect to appropriate dashboard based on role
+        $redirect_url = '';
         if ($user['role'] === 'admin') {
-            header('Location: ../admin/dashboard.php');
+            $redirect_url = '../admin/dashboard.php';
         } elseif ($user['role'] === 'salesperson') {
-            header('Location: ../salesperson/dashboard.php');
+            $redirect_url = '../salesperson/dashboard.php';
         } elseif ($user['role'] === 'stock_manager') {
-            header('Location: ../stock_manager/dashboard.php');
+            $redirect_url = '../stock_manager/dashboard.php';
         }
-        exit;
+        if ($is_ajax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true, 'redirect' => $redirect_url]);
+            exit;
+        } else {
+            header('Location: ' . $redirect_url);
+            exit;
+        }
+        } else {
+            if ($is_ajax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Invalid password.']);
+                exit;
+            } else {
+                $error_message = 'Invalid password. Please try again.';
+            }
+        }
     } else {
-        $error_message = "Invalid username or password. Please try again.";
+        if ($is_ajax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Invalid username or password.']);
+            exit;
+        } else {
+            $error_message = 'Invalid username or password. Please try again.';
+        }
     }
     
     // Close the database connection
@@ -71,9 +99,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Retail POS - Login</title>
-    <link rel="stylesheet" href="/dbms_project/assets/css/style.css">
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Premium 3D Glassmorphism Login Styles -->
+    <style>
+    body.login-page {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 55%, #fad0c4 100%) !important;
+        font-family: 'Poppins', sans-serif !important;
+        margin: 0; height: 100vh;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .login-container {
+        width: 360px; background: rgba(255,255,255,0.15);
+        border-radius: 1.5rem; border: 1px solid rgba(255,255,255,0.18);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.37);
+        backdrop-filter: blur(10px); padding: 2rem 1.5rem;
+        color: #fff; text-align: center;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .login-container:hover {
+        transform: perspective(500px) rotateY(3deg) rotateX(3deg);
+    }
+    .login-container.success {
+        box-shadow: 0 0 20px rgba(0,255,0,0.7);
+    }
+    .login-container.error {
+        animation: shake 0.6s;
+    }
+    @keyframes shake {
+        0%,100% { transform: translateX(0); }
+        20%,60% { transform: translateX(-10px); }
+        40%,80% { transform: translateX(10px); }
+    }
+    .login-header h1 { text-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+    .form-group input { transition: box-shadow 0.3s, transform 0.2s; }
+    .btn-primary { transition: background 0.3s, transform 0.2s; }
+    </style>
 </head>
 <body class="login-page">
     <div class="login-container">
@@ -88,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         <?php endif; ?>
         
-        <form class="login-form" action="index.php" method="post">
+        <form id="loginForm" action="index.php" method="post">
             <div class="form-group">
                 <label for="username"><i class="fas fa-user"></i> Username</label>
                 <input type="text" id="username" name="username" required>
@@ -111,125 +174,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
     
-    <style>
-        body.login-page {
-            background-color: #f8f9fa;
-            height: 100vh;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: Arial, sans-serif;
-        }
-        
-        .login-container {
-            width: 400px;
-            background-color: #fff;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-        }
-        
-        .login-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .login-header h1 {
-            font-size: 24px;
-            color: #333;
-            margin-bottom: 10px;
-        }
-        
-        .login-header p {
-            color: #777;
-            margin: 0;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #555;
-        }
-        
-        .form-group input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-            font-size: 16px;
-        }
-        
-        .form-group input:focus {
-            border-color: #4CAF50;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
-        }
-        
-        .form-actions {
-            margin-top: 30px;
-        }
-        
-        .btn {
-            display: inline-block;
-            font-weight: 400;
-            text-align: center;
-            white-space: nowrap;
-            vertical-align: middle;
-            user-select: none;
-            border: 1px solid transparent;
-            padding: 0.375rem 0.75rem;
-            font-size: 1rem;
-            line-height: 1.5;
-            border-radius: 0.25rem;
-            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-            cursor: pointer;
-        }
-        
-        .btn-primary {
-            color: #fff;
-            background-color: #4CAF50;
-            border-color: #4CAF50;
-        }
-        
-        .btn-primary:hover {
-            background-color: #45a049;
-            border-color: #45a049;
-        }
-        
-        .btn-block {
-            display: block;
-            width: 100%;
-            padding: 12px;
-        }
-        
-        .login-footer {
-            margin-top: 30px;
-            text-align: center;
-            color: #777;
-            font-size: 14px;
-        }
-        
-        .alert {
-            padding: 15px;
-            border-radius: 3px;
-            margin-bottom: 20px;
-            border: 1px solid transparent;
-        }
-        
-        .alert-danger {
-            color: #721c24;
-            background-color: #f8d7da;
-            border-color: #f5c6cb;
-        }
-        
-        .fas {
-            margin-right: 5px;
-        }
-    </style>
+    <!-- 3D Login UX Script -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('#loginForm');
+        const submitBtn = form.querySelector('button[type="submit"]');
+        form.addEventListener('submit', function() {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
+        });
+    });
+    </script>
+
 </body>
 </html>

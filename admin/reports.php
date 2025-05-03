@@ -44,12 +44,53 @@ if ($reportType === 'sales') {
         mysqli_free_result($result);
     }
 } elseif ($reportType === 'predictions') {
-    // Get AI prediction data from CSVs
-    $dailySalesPath = '../Retail-POS-system/ai_module/data/daily_sales_2025-04-15.csv';
-    $categorySalesPath = '../Retail-POS-system/ai_module/data/category_sales_2025-04-15.csv';
+    // Get AI prediction data from API
+    $predictionsEndpoint = '../salesperson/get_predictions.php';
+    $jsonResponse = file_get_contents($predictionsEndpoint);
+    $predictionsData = json_decode($jsonResponse, true);
     
-    $dailySalesData = readCSV($dailySalesPath);
-    $categorySalesData = readCSV($categorySalesPath);
+    $dailySalesData = [];
+    $categorySalesData = [];
+    
+    if ($predictionsData && isset($predictionsData['predictions'])) {
+        foreach ($predictionsData['predictions'] as $prediction) {
+            $dailySalesData[] = [
+                'Date' => $prediction['date'],
+                'Day' => $prediction['day'],
+                'Predicted' => $prediction['total_sales'],
+                'Confidence' => $prediction['confidence']
+            ];
+            
+            foreach ($prediction['categories'] as $category) {
+                $categorySalesData[] = [
+                    'Date' => $prediction['date'],
+                    'Day' => $prediction['day'],
+                    'Category' => $category['category'],
+                    'Sales' => $category['sales'],
+                    'Percentage' => $category['percentage']
+                ];
+            }
+        }
+    }
+
+    // Get actual daily sales from DB for the same dates as predictions
+    $predictionDates = array_column($dailySalesData, 'Date');
+    $actualSales = [];
+    if (!empty($predictionDates)) {
+        // Convert the dates to a format suitable for SQL IN clause
+        $dateList = array_map(function($d) use ($conn) { return "'" . $conn->real_escape_string($d) . "'"; }, $predictionDates);
+        $dateStr = implode(',', $dateList);
+        
+        // Query to get actual sales data
+        $query = "SELECT DATE(sale_date) as sale_date, SUM(total_amount) as total_sales FROM sales_transactions WHERE DATE(sale_date) IN ($dateStr) GROUP BY DATE(sale_date)";
+        $result = mysqli_query($conn, $query);
+        if ($result) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                $actualSales[$row['sale_date']] = $row['total_sales'];
+            }
+            mysqli_free_result($result);
+        }
+    }
 }
 
 // Include header
@@ -112,19 +153,77 @@ include '../includes/header/header.php';
             <div class="prediction-summary">
                 <p>The AI model has analyzed your sales data and made the following predictions:</p>
             </div>
+            <canvas id="salesPredictionChart" height="80"></canvas>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    var ctx = document.getElementById('salesPredictionChart').getContext('2d');
+                    var labels = <?php echo json_encode(array_column($dailySalesData, 'Date')); ?>;
+                    var predicted = <?php echo json_encode(array_map(function($row) { return floatval($row['Predicted_Sales']); }, $dailySalesData)); ?>;
+                    var actual = <?php
+                        $actualArr = [];
+                        foreach ($dailySalesData as $row) {
+                            $date = $row['Date'];
+                            $actualArr[] = isset($actualSales[$date]) ? floatval($actualSales[$date]) : null;
+                        }
+                        echo json_encode($actualArr);
+                    ?>;
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    label: 'Predicted Sales',
+                                    data: predicted,
+                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                    fill: false,
+                                    tension: 0.2
+                                },
+                                {
+                                    label: 'Actual Sales',
+                                    data: actual,
+                                    borderColor: 'rgba(255, 99, 132, 1)',
+                                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                    fill: false,
+                                    tension: 0.2
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { position: 'top' },
+                                title: { display: true, text: 'Actual vs Predicted Daily Sales' }
+                            },
+                            scales: {
+                                y: { beginAtZero: true }
+                            }
+                        }
+                    });
+                });
+            </script>
             <table class="table table-striped">
                 <thead>
                     <tr>
                         <th>Date</th>
                         <th>Predicted Sales</th>
+                        <th>Actual Sales</th>
                         <th>Confidence</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($dailySalesData as $row): ?>
+                    <?php foreach ($dailySalesData as $i => $row): ?>
                         <tr>
                             <td><?php echo $row['Date']; ?></td>
                             <td>$<?php echo number_format(floatval($row['Predicted_Sales']), 2); ?></td>
+                            <td>
+                                <?php 
+                                $date = $row['Date'];
+                                echo isset($actualSales[$date]) ? '$' . number_format(floatval($actualSales[$date]), 2) : '<span style="color:gray">N/A</span>';
+                                ?>
+                            </td>
                             <td><?php echo isset($row['Confidence']) ? $row['Confidence'] . '%' : 'N/A'; ?></td>
                         </tr>
                     <?php endforeach; ?>
